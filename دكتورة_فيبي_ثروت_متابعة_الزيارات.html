@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دكتورة فيبي ثروت | متابعة الزيارات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FFF5F8;
+    --panel: #FFFFFF;
+    --ink: #3A1B2A;
+    --ink-soft: #8A5D72;
+    --primary: #C2185B;
+    --primary-dark: #8E0F47;
+    --accent: #F06292;
+    --accent-soft: #FCE4EC;
+    --line: #F3D3E0;
+    --danger: #C34A3A;
+    --radius: 14px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Tajawal', sans-serif;
+    min-height: 100vh;
+  }
+  h1,h2,h3, .brand{ font-family:'Cairo', sans-serif; }
+
+  .app{ max-width: 960px; margin: 0 auto; padding: 20px 16px 60px; }
+
+  /* ===== LOCK SCREEN ===== */
+  #lockScreen{
+    position: fixed; inset:0; z-index: 100;
+    background: linear-gradient(150deg, var(--primary-dark), var(--primary) 60%, var(--accent));
+    display:flex; align-items:center; justify-content:center; padding: 20px;
+  }
+  .lock-card{
+    background: #fff; border-radius: 18px; padding: 34px 28px;
+    max-width: 340px; width:100%; text-align:center;
+    box-shadow: 0 20px 50px rgba(142,15,71,0.35);
+  }
+  .lock-card .icon{ font-size: 42px; margin-bottom: 6px; }
+  .lock-card h2{ margin: 4px 0 2px; font-size: 19px; color: var(--primary-dark); }
+  .lock-card p{ color: var(--ink-soft); font-size: 13px; margin: 0 0 18px; }
+  .lock-card input{
+    width:100%; text-align:center; letter-spacing: 6px; font-size: 20px;
+    padding: 12px; border-radius: 10px; border: 2px solid var(--line);
+    font-family: 'Tajawal', sans-serif; outline:none; margin-bottom: 12px;
+  }
+  .lock-card input:focus{ border-color: var(--primary); }
+  .lock-error{ color: var(--danger); font-size: 12.5px; min-height: 16px; margin-bottom: 8px; }
+  .lock-card button{
+    width:100%; padding: 12px; border:none; border-radius:10px; background: var(--primary);
+    color:#fff; font-family:'Tajawal',sans-serif; font-weight:700; font-size:15px; cursor:pointer;
+  }
+  .lock-card button:hover{ background: var(--primary-dark); }
+
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 18px 22px;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+    border-radius: var(--radius);
+    color: #fff;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  header.top::after{
+    content:"";
+    position:absolute; inset:0;
+    background: radial-gradient(circle at 90% -10%, rgba(255,255,255,0.22), transparent 55%);
+  }
+  .brand-block{ position:relative; z-index:1; }
+  .brand{ font-size: 21px; font-weight: 800; letter-spacing: 0.3px; margin:0; }
+  .tagline{ font-size: 13px; opacity: 0.9; margin-top: 2px; }
+  .pulse-dot{
+    width:10px; height:10px; border-radius:50%; background:#FFD54F;
+    display:inline-block; margin-inline-start:8px;
+    box-shadow: 0 0 0 0 rgba(255,213,79,0.6);
+    animation: pulse 2.2s infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow: 0 0 0 0 rgba(255,213,79,0.55);}
+    70%{ box-shadow: 0 0 0 10px rgba(255,213,79,0);}
+    100%{ box-shadow: 0 0 0 0 rgba(255,213,79,0);}
+  }
+  .today-badge{
+    position:relative; z-index:1;
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    text-align:center;
+    white-space: nowrap;
+  }
+  .today-badge b{ display:block; font-size:14px; font-family:'Cairo',sans-serif; }
+
+  nav.tabs{
+    display:flex; gap:8px; margin-bottom: 18px;
+    background: var(--panel);
+    padding: 6px; border-radius: 12px;
+    border: 1px solid var(--line);
+  }
+  nav.tabs button{
+    flex:1; border:none; background:transparent; cursor:pointer;
+    padding: 10px 8px; border-radius: 9px;
+    font-family:'Tajawal',sans-serif; font-weight:700; font-size: 13.5px;
+    color: var(--ink-soft);
+    transition: all .15s ease;
+  }
+  nav.tabs button.active{ background: var(--primary); color:#fff; }
+  nav.tabs button .count{
+    display:inline-block; margin-inline-start:5px;
+    background: rgba(0,0,0,0.08); border-radius:999px; padding:1px 7px; font-size:11px;
+  }
+  nav.tabs button.active .count{ background: rgba(255,255,255,0.25); }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .panel h2{ margin:0 0 4px; font-size: 18px; color: var(--primary-dark);}
+  .panel .sub{ color: var(--ink-soft); font-size: 13px; margin: 0 0 16px; }
+
+  .subtabs{ display:flex; gap:8px; margin-bottom: 16px; }
+  .subtabs button{
+    border: 1.5px solid var(--line); background: #fff; color: var(--primary-dark);
+    border-radius: 999px; padding: 7px 16px; font-family:'Tajawal',sans-serif;
+    font-weight:700; font-size: 13px; cursor:pointer;
+  }
+  .subtabs button.active{ background: var(--primary); color:#fff; border-color: var(--primary); }
+
+  .form-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid .full{ grid-column: 1 / -1; }
+  @media (max-width: 600px){ .form-grid{ grid-template-columns: 1fr; } }
+
+  label{ font-size: 12.5px; font-weight:700; color: var(--ink-soft); display:block; margin-bottom:5px;}
+  input[type=text], input[type=tel], input[type=date], input[type=password], select, textarea{
+    width:100%; padding: 10px 12px; border-radius: 9px;
+    border: 1.5px solid var(--line); background: #FFFBFC;
+    font-family:'Tajawal',sans-serif; font-size: 14px; color: var(--ink);
+    outline:none; transition: border-color .15s ease;
+  }
+  input:focus, select:focus, textarea:focus{ border-color: var(--primary); background:#fff; }
+  .date-hint{ font-size: 11.5px; color: var(--primary); margin-top: 4px; font-weight:700; }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    border:none; cursor:pointer; border-radius: 9px;
+    padding: 10px 18px; font-family:'Tajawal',sans-serif; font-weight:700; font-size: 14px;
+    transition: transform .1s ease, opacity .15s ease;
+  }
+  .btn:active{ transform: scale(0.97); }
+  .btn-primary{ background: var(--primary); color:#fff; }
+  .btn-primary:hover{ background: var(--primary-dark); }
+  .btn-accent{ background: var(--accent); color:#fff; }
+  .btn-ghost{ background: transparent; color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-danger{ background: transparent; color: var(--danger); border: 1.5px solid transparent; }
+  .btn-danger:hover{ border-color: var(--danger); }
+  .btn-sm{ padding: 6px 12px; font-size: 12.5px; }
+  .btn[disabled]{ opacity:0.5; cursor:not-allowed; }
+
+  .row-end{ display:flex; justify-content:flex-end; gap:10px; margin-top: 14px; flex-wrap:wrap; }
+
+  .filter-bar{ display:flex; gap:10px; margin-bottom: 14px; flex-wrap: wrap; align-items:center;}
+  .filter-bar select, .filter-bar input{ width:auto; min-width: 160px; }
+  .filter-bar .search{ flex:1; min-width: 160px; }
+
+  .photo-box{
+    display:flex; align-items:center; gap:12px; margin-top: 4px;
+  }
+  .photo-preview{
+    width: 74px; height: 74px; border-radius: 10px; object-fit: cover;
+    border: 1.5px solid var(--line); background: var(--accent-soft);
+  }
+  .photo-placeholder{
+    width:74px; height:74px; border-radius:10px; border:1.5px dashed var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:22px; color: var(--ink-soft);
+    background: var(--accent-soft);
+  }
+
+  .doctor-card{
+    border: 1.5px solid var(--line); border-radius: 12px; padding: 14px 16px;
+    margin-bottom: 10px; display:flex; justify-content:space-between; gap:12px;
+    align-items:flex-start; background:#FFFBFC;
+  }
+  .doctor-card.visited-today{ border-color: var(--primary); background: #FDEFF4; }
+  .doc-thumb{
+    width: 54px; height: 54px; border-radius: 10px; object-fit: cover; flex-shrink:0;
+    border: 1.5px solid var(--line);
+  }
+  .doc-main{ display:flex; gap:10px; }
+  .doc-info b.name{ font-size: 15.5px; font-family:'Cairo',sans-serif; }
+  .area-chip{
+    display:inline-block; background: var(--accent-soft); color: var(--primary-dark);
+    font-size: 11px; font-weight:700; padding: 2px 9px; border-radius: 999px;
+    margin-inline-start: 6px; vertical-align: middle;
+  }
+  .sp-chip{
+    display:inline-block; background: #FFF0BF; color: #8A5A14;
+    font-size: 11px; font-weight:700; padding: 2px 9px; border-radius: 999px;
+    margin-inline-start: 6px; vertical-align: middle;
+  }
+  .doc-meta{ margin-top:6px; font-size:12.5px; color: var(--ink-soft); line-height:1.9; }
+  .doc-meta span{ display:inline-flex; align-items:center; gap:4px; margin-inline-end: 14px; }
+  .doc-actions{ display:flex; flex-direction:column; gap:6px; min-width: 118px; }
+
+  .visited-tag{
+    font-size: 11.5px; color: var(--primary); font-weight:700;
+    display:flex; align-items:center; gap:4px; margin-top:4px;
+  }
+
+  .empty-state{ text-align:center; padding: 40px 20px; color: var(--ink-soft); }
+  .empty-state .icon{ font-size: 34px; margin-bottom:8px; }
+
+  table.report-table{ width:100%; border-collapse: collapse; font-size: 13.5px; }
+  table.report-table th{
+    text-align: right; padding: 10px 8px; background: var(--accent-soft); color: var(--primary-dark);
+    font-size: 12px; border-bottom: 2px solid var(--line);
+  }
+  table.report-table td{ padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top;}
+  table.report-table tr:last-child td{ border-bottom:none; }
+
+  .toast{
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--primary-dark); color:#fff; padding: 11px 22px; border-radius: 999px;
+    font-size: 13.5px; font-weight:700; opacity:0; pointer-events:none;
+    transition: all .25s ease; z-index: 50; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+  .stat-strip{ display:flex; gap:10px; margin-bottom:16px; }
+  .stat{
+    flex:1; background: var(--panel); border:1px solid var(--line); border-radius:12px;
+    padding: 14px; text-align:center;
+  }
+  .stat b{ display:block; font-size: 22px; font-family:'Cairo',sans-serif; color: var(--primary); }
+  .stat span{ font-size:11.5px; color: var(--ink-soft); }
+
+  textarea.copy-preview{ min-height: 160px; font-family: 'Tajawal', monospace; line-height:1.8; resize: vertical; }
+  textarea.bulk-input{ min-height: 140px; font-family: 'Tajawal', monospace; font-size: 13px; line-height:1.7; }
+
+  .loading{ text-align:center; padding:30px; color: var(--ink-soft); font-size:13px; }
+  .hint-box{
+    background: var(--accent-soft); border: 1px dashed var(--line); border-radius: 10px;
+    padding: 10px 12px; font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; line-height:1.8;
+  }
+  .hint-box code{ background: #fff; padding: 1px 6px; border-radius: 5px; }
+</style>
+</head>
+<body>
+
+<div id="lockScreen">
+  <div class="lock-card">
+    <div class="icon">🔒</div>
+    <h2>دكتورة فيبي ثروت</h2>
+    <p>ادخلي كلمة السر عشان تدخلي على بيانات الدكاترة والزيارات</p>
+    <input type="password" id="lockInput" placeholder="••••" maxlength="12" inputmode="numeric">
+    <div class="lock-error" id="lockError"></div>
+    <button id="lockBtn">دخول</button>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none;">
+
+  <header class="top">
+    <div class="brand-block">
+      <p class="brand">دكتورة فيبي ثروت<span class="pulse-dot"></span></p>
+      <p class="tagline">متابعة زيارات الدكاترة يوم بيوم</p>
+    </div>
+    <div class="today-badge">
+      اليوم<br><b id="todayLabel">--</b>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="doctors">الدكاترة <span class="count" id="countDoctors">0</span></button>
+    <button data-tab="today">زيارات اليوم <span class="count" id="countToday">0</span></button>
+    <button data-tab="report">التقرير والتصدير</button>
+  </nav>
+
+  <div id="loadingBox" class="loading">جاري تحميل البيانات...</div>
+
+  <!-- ================= DOCTORS TAB ================= -->
+  <div id="tab-doctors" style="display:none;">
+
+    <div class="subtabs">
+      <button class="active" data-sub="single">➕ إضافة دكتور واحد</button>
+      <button data-sub="bulk">📋 إضافة دكاترة كتير مع بعض</button>
+    </div>
+
+    <!-- SINGLE ADD -->
+    <div id="sub-single" class="panel">
+      <h2 id="formTitle">إضافة دكتور جديد</h2>
+      <p class="sub">سجّلي بيانات الدكتور مرة واحدة، وهتلاقيها جاهزة كل ما تزوريه</p>
+      <div class="form-grid">
+        <div>
+          <label>اسم الدكتور *</label>
+          <input type="text" id="fName" placeholder="د. أحمد محمود">
+        </div>
+        <div>
+          <label>التخصص (Sp)</label>
+          <input type="text" id="fSp" placeholder="مثال: أطفال / باطنة / جلدية">
+        </div>
+        <div>
+          <label>المنطقة</label>
+          <input type="text" id="fArea" placeholder="مثال: مدينة نصر">
+        </div>
+        <div>
+          <label>رقم تليفون العيادة</label>
+          <input type="tel" id="fPhone" placeholder="01xxxxxxxxx">
+        </div>
+        <div>
+          <label>عنوان العيادة</label>
+          <input type="text" id="fAddress" placeholder="عيادة.. شارع.. الدور..">
+        </div>
+        <div>
+          <label>اسم الدواء / المنتج</label>
+          <input type="text" id="fMed" placeholder="اسم الصنف أو الأصناف">
+        </div>
+        <div class="full">
+          <label>تاريخ الزيارة</label>
+          <input type="date" id="fDay">
+          <div class="date-hint" id="fDayHint">--</div>
+        </div>
+        <div class="full">
+          <label>صورة العيادة (اختياري)</label>
+          <div class="photo-box">
+            <div id="photoPreviewWrap"><div class="photo-placeholder">📷</div></div>
+            <div style="display:flex; flex-direction:column; gap:6px;">
+              <input type="file" id="fPhoto" accept="image/*" capture="environment" style="display:none;">
+              <button type="button" class="btn btn-ghost btn-sm" id="pickPhotoBtn">📷 صوّري العيادة</button>
+              <button type="button" class="btn btn-danger btn-sm" id="removePhotoBtn" style="display:none;">إزالة الصورة</button>
+            </div>
+          </div>
+        </div>
+        <div class="full">
+          <label>ملاحظات (اختياري)</label>
+          <textarea id="fNotes" rows="2" placeholder="أي ملاحظات عن الدكتور أو العيادة"></textarea>
+        </div>
+      </div>
+      <div class="row-end">
+        <button class="btn btn-ghost" id="cancelEditBtn" style="display:none;">إلغاء التعديل</button>
+        <button class="btn btn-primary" id="saveDoctorBtn">💾 حفظ الدكتور</button>
+      </div>
+    </div>
+
+    <!-- BULK ADD -->
+    <div id="sub-bulk" class="panel" style="display:none;">
+      <h2>إضافة دكاترة كتير مع بعض</h2>
+      <p class="sub">الصقي البيانات من الإكسل، كل دكتور في سطر لوحده</p>
+      <div class="hint-box">
+        رتّبي كل سطر بالشكل ده (افصلي بين الأعمدة بـ Tab زي ما بينسخ من إكسل تلقائي):<br>
+        <code>Name&nbsp;&nbsp;&nbsp;Sp&nbsp;&nbsp;&nbsp;Medicine-Address</code><br>
+        مثال: <code>د. سارة يوسف&nbsp;&nbsp;&nbsp;أطفال&nbsp;&nbsp;&nbsp;بانادول - عيادة النور، المعادي</code>
+      </div>
+      <div class="form-grid" style="margin-bottom:12px;">
+        <div>
+          <label>المنطقة (تتطبق على كل الدكاترة اللي هتتضاف دلوقتي)</label>
+          <input type="text" id="bulkArea" placeholder="مثال: المعادي">
+        </div>
+        <div>
+          <label>تاريخ الزيارة لكل الدفعة دي</label>
+          <input type="date" id="bulkDay">
+        </div>
+      </div>
+      <textarea class="bulk-input" id="bulkInput" placeholder="د. أحمد علي	باطنة	بانادول - شارع التحرير
+د. منى حسن	جلدية	اوجمنتين - عيادة النيل"></textarea>
+      <div class="row-end">
+        <button class="btn btn-primary" id="bulkAddBtn">➕ إضافة كل الدكاترة</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="filter-bar">
+        <input type="text" class="search" id="searchInput" placeholder="🔍 دوري باسم الدكتور...">
+        <select id="areaFilter"><option value="">كل المناطق</option></select>
+      </div>
+      <div id="doctorsList"></div>
+    </div>
+  </div>
+
+  <!-- ================= TODAY TAB ================= -->
+  <div id="tab-today" style="display:none;">
+    <div class="stat-strip">
+      <div class="stat"><b id="statTodayCount">0</b><span>زيارة النهاردة</span></div>
+      <div class="stat"><b id="statTotalDoctors">0</b><span>إجمالي الدكاترة</span></div>
+    </div>
+    <div class="panel">
+      <h2>زيارات النهاردة</h2>
+      <p class="sub" id="todayFullDate">--</p>
+      <div id="todayList"></div>
+    </div>
+  </div>
+
+  <!-- ================= REPORT TAB ================= -->
+  <div id="tab-report" style="display:none;">
+    <div class="panel">
+      <h2>تقرير الزيارات</h2>
+      <p class="sub">اختاري اليوم، وابعتي التقرير لـ HR كنص جاهز أو ملف إكسل</p>
+      <div class="filter-bar">
+        <label style="align-self:center; margin:0;">اليوم:</label>
+        <input type="date" id="reportDate">
+        <button class="btn btn-ghost btn-sm" id="reportTodayBtn">النهاردة</button>
+      </div>
+      <div id="reportTableWrap"></div>
+      <div class="row-end" id="reportActions" style="display:none;">
+        <button class="btn btn-ghost" id="downloadCsvBtn">⬇️ تحميل شيت إكسل</button>
+        <button class="btn btn-accent" id="copyTextBtn">📋 نسخ كرسالة لـ HR</button>
+      </div>
+    </div>
+    <div class="panel" id="previewPanel" style="display:none;">
+      <h2>معاينة الرسالة</h2>
+      <textarea class="copy-preview" id="copyPreview" readonly></textarea>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_PASSWORD = "1234";
+const ARABIC_DAYS = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const ARABIC_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+let doctors = [];
+let visits = [];
+let editingDoctorId = null;
+let pendingPhoto = null; // base64 of newly captured photo for the single-add form
+
+/* ---------------- LOCK SCREEN ---------------- */
+document.getElementById('lockBtn').addEventListener('click', tryUnlock);
+document.getElementById('lockInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  const val = document.getElementById('lockInput').value.trim();
+  if(val === APP_PASSWORD){
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
+    init();
+  }else{
+    document.getElementById('lockError').textContent = 'كلمة السر غلط، حاولي تاني';
+    document.getElementById('lockInput').value = '';
+    document.getElementById('lockInput').focus();
+  }
+}
+
+/* ---------------- HELPERS ---------------- */
+function todayISO(){
+  const d = new Date();
+  const tz = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - tz*60000);
+  return local.toISOString().slice(0,10);
+}
+function formatArabicDate(iso){
+  if(!iso) return '--';
+  const [y,m,d] = iso.split('-').map(Number);
+  const dateObj = new Date(y, m-1, d);
+  return `${ARABIC_DAYS[dateObj.getDay()]} ${d} ${ARABIC_MONTHS[m-1]} ${y}`;
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 2400);
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------------- IMAGE COMPRESSION ---------------- */
+function compressImage(file, maxDim = 480, quality = 0.6){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > height && width > maxDim){
+          height = Math.round(height * (maxDim/width)); width = maxDim;
+        }else if(height > maxDim){
+          width = Math.round(width * (maxDim/height)); height = maxDim;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+document.getElementById('pickPhotoBtn').addEventListener('click', ()=> document.getElementById('fPhoto').click());
+document.getElementById('fPhoto').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  showToast('⏳ جاري تجهيز الصورة...');
+  try{
+    pendingPhoto = await compressImage(file);
+    renderPhotoPreview(pendingPhoto);
+    showToast('✅ اتضافت الصورة');
+  }catch(err){
+    showToast('⚠️ حصل خطأ في تحميل الصورة');
+  }
+});
+document.getElementById('removePhotoBtn').addEventListener('click', ()=>{
+  pendingPhoto = null;
+  document.getElementById('fPhoto').value = '';
+  renderPhotoPreview(null);
+});
+function renderPhotoPreview(src){
+  const wrap = document.getElementById('photoPreviewWrap');
+  const removeBtn = document.getElementById('removePhotoBtn');
+  if(src){
+    wrap.innerHTML = `<img src="${src}" class="photo-preview">`;
+    removeBtn.style.display = 'inline-flex';
+  }else{
+    wrap.innerHTML = `<div class="photo-placeholder">📷</div>`;
+    removeBtn.style.display = 'none';
+  }
+}
+
+/* ---------------- STORAGE ---------------- */
+async function loadData(){
+  try{
+    const d = await window.storage.get('doctors', false);
+    doctors = d ? JSON.parse(d.value) : [];
+  }catch(e){ doctors = []; }
+  try{
+    const v = await window.storage.get('visits', false);
+    visits = v ? JSON.parse(v.value) : [];
+  }catch(e){ visits = []; }
+}
+async function saveDoctors(){
+  try{ await window.storage.set('doctors', JSON.stringify(doctors), false); }
+  catch(e){ showToast('⚠️ حصل خطأ في الحفظ، جربي تقللي عدد الصور'); }
+}
+async function saveVisits(){
+  try{ await window.storage.set('visits', JSON.stringify(visits), false); }
+  catch(e){ showToast('⚠️ حصل خطأ في الحفظ'); }
+}
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    ['doctors','today','report'].forEach(t=>{
+      document.getElementById('tab-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
+    });
+    if(btn.dataset.tab === 'today') renderToday();
+    if(btn.dataset.tab === 'report') renderReport();
+  });
+});
+
+document.querySelectorAll('.subtabs button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.subtabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sub-single').style.display = (btn.dataset.sub==='single') ? 'block':'none';
+    document.getElementById('sub-bulk').style.display = (btn.dataset.sub==='bulk') ? 'block':'none';
+  });
+});
+
+/* ---------------- DATE FIELD AUTO-FILL ---------------- */
+function initDateField(inputEl, hintEl){
+  if(!inputEl.value) inputEl.value = todayISO();
+  const update = ()=>{ if(hintEl) hintEl.textContent = formatArabicDate(inputEl.value); };
+  inputEl.addEventListener('change', update);
+  update();
+}
+
+/* ---------------- SINGLE ADD / EDIT ---------------- */
+document.getElementById('saveDoctorBtn').addEventListener('click', async ()=>{
+  const name = document.getElementById('fName').value.trim();
+  if(!name){ showToast('⚠️ اكتبي اسم الدكتور'); return; }
+
+  const payload = {
+    name,
+    specialty: document.getElementById('fSp').value.trim(),
+    area: document.getElementById('fArea').value.trim(),
+    address: document.getElementById('fAddress').value.trim(),
+    phone: document.getElementById('fPhone').value.trim(),
+    med: document.getElementById('fMed').value.trim(),
+    day: document.getElementById('fDay').value || todayISO(),
+    notes: document.getElementById('fNotes').value.trim(),
+  };
+
+  if(editingDoctorId){
+    const idx = doctors.findIndex(d=>d.id===editingDoctorId);
+    if(idx>-1){
+      doctors[idx] = {...doctors[idx], ...payload};
+      if(pendingPhoto !== undefined && pendingPhoto !== null) doctors[idx].photo = pendingPhoto;
+    }
+    showToast('✅ اتحدثت بيانات الدكتور');
+  } else {
+    doctors.push({ id: uid(), ...payload, photo: pendingPhoto || null });
+    showToast('✅ اتضاف الدكتور');
+  }
+  await saveDoctors();
+  resetForm();
+  renderDoctors();
+  renderAreaFilter();
+});
+
+document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+function resetForm(){
+  editingDoctorId = null;
+  pendingPhoto = null;
+  document.getElementById('formTitle').textContent = 'إضافة دكتور جديد';
+  document.getElementById('saveDoctorBtn').textContent = '💾 حفظ الدكتور';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+  ['fName','fSp','fArea','fAddress','fPhone','fMed','fNotes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fPhoto').value = '';
+  renderPhotoPreview(null);
+  document.getElementById('fDay').value = todayISO();
+  initDateField(document.getElementById('fDay'), document.getElementById('fDayHint'));
+}
+
+function editDoctor(id){
+  const doc = doctors.find(d=>d.id===id);
+  if(!doc) return;
+  editingDoctorId = id;
+  pendingPhoto = null;
+  document.querySelector('.subtabs button[data-sub="single"]').click();
+  document.getElementById('formTitle').textContent = 'تعديل بيانات الدكتور';
+  document.getElementById('saveDoctorBtn').textContent = '💾 حفظ التعديل';
+  document.getElementById('cancelEditBtn').style.display = 'inline-flex';
+  document.getElementById('fName').value = doc.name;
+  document.getElementById('fSp').value = doc.specialty || '';
+  document.getElementById('fArea').value = doc.area || '';
+  document.getElementById('fAddress').value = doc.address || '';
+  document.getElementById('fPhone').value = doc.phone || '';
+  document.getElementById('fMed').value = doc.med || '';
+  document.getElementById('fDay').value = doc.day || todayISO();
+  document.getElementById('fNotes').value = doc.notes || '';
+  initDateField(document.getElementById('fDay'), document.getElementById('fDayHint'));
+  renderPhotoPreview(doc.photo || null);
+  document.getElementById('tab-doctors').scrollIntoView({behavior:'smooth'});
+}
+
+async function deleteDoctor(id){
+  if(!confirm('متأكدة إنك عاوزة تمسحي بيانات الدكتور ده؟')) return;
+  doctors = doctors.filter(d=>d.id!==id);
+  visits = visits.filter(v=>v.doctorId!==id);
+  await saveDoctors();
+  await saveVisits();
+  renderDoctors();
+  renderAreaFilter();
+  renderToday();
+}
+
+/* ---------------- BULK ADD ---------------- */
+document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
+  const raw = document.getElementById('bulkInput').value;
+  const commonArea = document.getElementById('bulkArea').value.trim();
+  const commonDay = document.getElementById('bulkDay').value || todayISO();
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+
+  if(lines.length === 0){ showToast('⚠️ الصقي بيانات الدكاترة الأول'); return; }
+
+  let added = 0;
+  lines.forEach(line=>{
+    let parts = line.split('\t').map(p=>p.trim());
+    if(parts.length < 2) parts = line.split(/\s{2,}|,/).map(p=>p.trim());
+    const name = parts[0];
+    if(!name) return;
+    const sp = parts[1] || '';
+    const medAddress = parts.slice(2).join(' - ').trim();
+    doctors.push({
+      id: uid(),
+      name,
+      specialty: sp,
+      area: commonArea,
+      address: '',
+      phone: '',
+      med: medAddress,
+      day: commonDay,
+      notes: '',
+      photo: null
+    });
+    added++;
+  });
+
+  if(added === 0){ showToast('⚠️ مقدرتش أقرأ أي سطر، تأكدي من الفورمات'); return; }
+
+  await saveDoctors();
+  document.getElementById('bulkInput').value = '';
+  renderDoctors();
+  renderAreaFilter();
+  showToast(`✅ اتضاف ${added} دكتور بنجاح`);
+});
+
+async function logVisitToday(id){
+  const t = todayISO();
+  const already = visits.find(v=>v.doctorId===id && v.date===t);
+  if(already){ showToast('اتسجلت زيارة النهاردة قبل كده'); return; }
+  const now = new Date();
+  visits.push({
+    id: uid(), doctorId: id, date: t,
+    time: now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})
+  });
+  await saveVisits();
+  showToast('✅ اتسجلت الزيارة');
+  renderDoctors();
+  renderToday();
+}
+async function unlogVisit(visitId){
+  visits = visits.filter(v=>v.id!==visitId);
+  await saveVisits();
+  renderDoctors();
+  renderToday();
+}
+
+/* ---------------- RENDER DOCTORS ---------------- */
+function renderAreaFilter(){
+  const sel = document.getElementById('areaFilter');
+  const current = sel.value;
+  const areas = [...new Set(doctors.map(d=>d.area).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">كل المناطق</option>' + areas.map(a=>`<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+  sel.value = current;
+}
+
+function renderDoctors(){
+  const list = document.getElementById('doctorsList');
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const areaFilter = document.getElementById('areaFilter').value;
+  const t = todayISO();
+
+  let filtered = doctors.filter(d=>{
+    const matchSearch = !search || d.name.toLowerCase().includes(search);
+    const matchArea = !areaFilter || d.area === areaFilter;
+    return matchSearch && matchArea;
+  });
+
+  document.getElementById('countDoctors').textContent = doctors.length;
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="icon">🩺</div>لسه مفيش دكاترة مسجلين${search||areaFilter ? ' مطابقين للبحث' : ''}</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(d=>{
+    const visitedToday = visits.find(v=>v.doctorId===d.id && v.date===t);
+    return `
+    <div class="doctor-card ${visitedToday ? 'visited-today':''}">
+      <div class="doc-main">
+        ${d.photo ? `<img src="${d.photo}" class="doc-thumb">` : ''}
+        <div class="doc-info">
+          <b class="name">${escapeHtml(d.name)}</b>
+          ${d.specialty ? `<span class="sp-chip">${escapeHtml(d.specialty)}</span>` : ''}
+          ${d.area ? `<span class="area-chip">${escapeHtml(d.area)}</span>` : ''}
+          <div class="doc-meta">
+            ${d.address ? `<span>📍 ${escapeHtml(d.address)}</span>` : ''}
+            ${d.phone ? `<span>📞 ${escapeHtml(d.phone)}</span>` : ''}
+            ${d.med ? `<span>💊 ${escapeHtml(d.med)}</span>` : ''}
+            ${d.day ? `<span>📅 ${formatArabicDate(d.day)}</span>` : ''}
+          </div>
+          ${visitedToday ? `<div class="visited-tag">✔ اتزار النهاردة الساعة ${visitedToday.time}</div>` : ''}
+        </div>
+      </div>
+      <div class="doc-actions">
+        ${visitedToday
+          ? `<button class="btn btn-ghost btn-sm" onclick="unlogVisit('${visitedToday.id}')">إلغاء الزيارة</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="logVisitToday('${d.id}')">✔ سجل زيارة اليوم</button>`
+        }
+        <button class="btn btn-ghost btn-sm" onclick="editDoctor('${d.id}')">✏️ تعديل</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteDoctor('${d.id}')">🗑 حذف</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('searchInput').addEventListener('input', renderDoctors);
+document.getElementById('areaFilter').addEventListener('change', renderDoctors);
+
+/* ---------------- TODAY TAB ---------------- */
+function renderToday(){
+  const t = todayISO();
+  document.getElementById('todayLabel').textContent = formatArabicDate(t);
+  document.getElementById('todayFullDate').textContent = formatArabicDate(t);
+
+  const todaysVisits = visits.filter(v=>v.date===t)
+    .map(v=> ({...v, doctor: doctors.find(d=>d.id===v.doctorId)}))
+    .filter(v=>v.doctor);
+
+  document.getElementById('countToday').textContent = todaysVisits.length;
+  document.getElementById('statTodayCount').textContent = todaysVisits.length;
+  document.getElementById('statTotalDoctors').textContent = doctors.length;
+
+  const list = document.getElementById('todayList');
+  if(todaysVisits.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div>لسه معملتيش أي زيارة النهاردة<br><span style="font-size:12px;">روحي لتبويب "الدكاترة" وسجلي الزيارة من هناك</span></div>`;
+    return;
+  }
+
+  list.innerHTML = todaysVisits.map((v,i)=>`
+    <div class="doctor-card visited-today">
+      <div class="doc-main">
+        ${v.doctor.photo ? `<img src="${v.doctor.photo}" class="doc-thumb">` : ''}
+        <div class="doc-info">
+          <b class="name">${i+1}. ${escapeHtml(v.doctor.name)}</b>
+          ${v.doctor.specialty ? `<span class="sp-chip">${escapeHtml(v.doctor.specialty)}</span>` : ''}
+          ${v.doctor.area ? `<span class="area-chip">${escapeHtml(v.doctor.area)}</span>` : ''}
+          <div class="doc-meta">
+            ${v.doctor.address ? `<span>📍 ${escapeHtml(v.doctor.address)}</span>` : ''}
+            ${v.doctor.phone ? `<span>📞 ${escapeHtml(v.doctor.phone)}</span>` : ''}
+            ${v.doctor.med ? `<span>💊 ${escapeHtml(v.doctor.med)}</span>` : ''}
+          </div>
+          <div class="visited-tag">✔ الساعة ${v.time}</div>
+        </div>
+      </div>
+      <div class="doc-actions">
+        <button class="btn btn-ghost btn-sm" onclick="unlogVisit('${v.id}')">إلغاء</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------------- REPORT TAB ---------------- */
+const reportDateInput = document.getElementById('reportDate');
+reportDateInput.addEventListener('change', renderReport);
+document.getElementById('reportTodayBtn').addEventListener('click', ()=>{
+  reportDateInput.value = todayISO();
+  renderReport();
+});
+
+function getReportRows(){
+  const date = reportDateInput.value;
+  return visits.filter(v=>v.date===date)
+    .map(v=>({...v, doctor: doctors.find(d=>d.id===v.doctorId)}))
+    .filter(v=>v.doctor)
+    .sort((a,b)=> a.time.localeCompare(b.time));
+}
+
+function renderReport(){
+  const date = reportDateInput.value || todayISO();
+  const rows = getReportRows();
+  const wrap = document.getElementById('reportTableWrap');
+  const actions = document.getElementById('reportActions');
+  const preview = document.getElementById('previewPanel');
+
+  if(rows.length === 0){
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📭</div>مفيش زيارات مسجلة في ${formatArabicDate(date)}</div>`;
+    actions.style.display = 'none';
+    preview.style.display = 'none';
+    return;
+  }
+
+  actions.style.display = 'flex';
+  wrap.innerHTML = `
+    <table class="report-table">
+      <thead><tr>
+        <th>#</th><th>اسم الدكتور</th><th>التخصص</th><th>المنطقة</th><th>الدواء</th><th>عنوان العيادة</th><th>تليفون العيادة</th><th>وقت الزيارة</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map((r,i)=>`
+          <tr>
+            <td>${i+1}</td>
+            <td>${escapeHtml(r.doctor.name)}</td>
+            <td>${escapeHtml(r.doctor.specialty || '-')}</td>
+            <td>${escapeHtml(r.doctor.area || '-')}</td>
+            <td>${escapeHtml(r.doctor.med || '-')}</td>
+            <td>${escapeHtml(r.doctor.address || '-')}</td>
+            <td>${escapeHtml(r.doctor.phone || '-')}</td>
+            <td>${r.time}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+document.getElementById('copyTextBtn').addEventListener('click', async ()=>{
+  const date = reportDateInput.value || todayISO();
+  const rows = getReportRows();
+  let text = `تقرير زيارات - ${formatArabicDate(date)}\nعدد الزيارات: ${rows.length}\n\n`;
+  rows.forEach((r,i)=>{
+    text += `${i+1}. ${r.doctor.name}${r.doctor.specialty ? ' (' + r.doctor.specialty + ')' : ''} - ${r.doctor.area || ''}\n`;
+    if(r.doctor.med) text += `   الدواء: ${r.doctor.med}\n`;
+    if(r.doctor.address) text += `   العيادة: ${r.doctor.address}\n`;
+    if(r.doctor.phone) text += `   تليفون: ${r.doctor.phone}\n`;
+    text += `   وقت الزيارة: ${r.time}\n\n`;
+  });
+
+  document.getElementById('copyPreview').value = text;
+  document.getElementById('previewPanel').style.display = 'block';
+
+  try{
+    await navigator.clipboard.writeText(text);
+    showToast('✅ اتنسخت الرسالة، جاهزة تلصقيها في واتساب أو إيميل');
+  }catch(e){
+    showToast('انسخي النص يدويًا من الصندوق تحت');
+  }
+});
+
+document.getElementById('downloadCsvBtn').addEventListener('click', ()=>{
+  const date = reportDateInput.value || todayISO();
+  const rows = getReportRows();
+  const header = ['اسم الدكتور','التخصص','المنطقة','الدواء','عنوان العيادة','تليفون العيادة','تاريخ الزيارة','وقت الزيارة'];
+  const csvRows = [header.join(',')];
+  rows.forEach(r=>{
+    const line = [r.doctor.name, r.doctor.specialty||'', r.doctor.area||'', r.doctor.med||'', r.doctor.address||'', r.doctor.phone||'', r.date, r.time]
+      .map(v => `"${(v||'').toString().replace(/"/g,'""')}"`);
+    csvRows.push(line.join(','));
+  });
+  const csvContent = '\uFEFF' + csvRows.join('\n');
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `تقرير_زيارات_${date}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('⬇️ اتحمّل الملف');
+});
+
+/* ---------------- INIT ---------------- */
+async function init(){
+  await loadData();
+  document.getElementById('loadingBox').style.display = 'none';
+  document.getElementById('tab-doctors').style.display = 'block';
+
+  document.getElementById('fDay').value = todayISO();
+  initDateField(document.getElementById('fDay'), document.getElementById('fDayHint'));
+  document.getElementById('bulkDay').value = todayISO();
+  reportDateInput.value = todayISO();
+
+  renderDoctors();
+  renderAreaFilter();
+  renderToday();
+  renderReport();
+}
+</script>
+</body>
+</html>
