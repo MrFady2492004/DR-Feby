@@ -222,6 +222,24 @@
   .empty-state{ text-align:center; padding: 40px 20px; color: var(--ink-soft); }
   .empty-state .icon{ font-size: 34px; margin-bottom:8px; }
 
+  .area-group-header{
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--accent-soft); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 14px; margin: 16px 0 10px;
+    cursor:pointer; user-select:none;
+  }
+  .area-group-header:first-child{ margin-top:0; }
+  .area-group-header .agh-title{
+    font-family:'Cairo',sans-serif; font-weight:800; color: var(--primary-dark); font-size:14.5px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .area-group-header .agh-count{
+    background:#fff; color: var(--primary-dark); border-radius:999px;
+    padding:1px 9px; font-size:11.5px; font-weight:700;
+  }
+  .area-group-header .agh-chevron{ transition: transform .15s ease; color: var(--primary); font-size:13px; }
+  .area-group-header.collapsed .agh-chevron{ transform: rotate(-90deg); }
+
   table.report-table{ width:100%; border-collapse: collapse; font-size: 13.5px; }
   table.report-table th{
     text-align: right; padding: 10px 8px; background: var(--accent-soft); color: var(--primary-dark);
@@ -359,22 +377,18 @@
       <h2>إضافة دكاترة كتير مع بعض</h2>
       <p class="sub">الصقي البيانات من الإكسل، كل دكتور في سطر لوحده</p>
       <div class="hint-box">
-        رتّبي كل سطر بالشكل ده (افصلي بين الأعمدة بـ Tab زي ما بينسخ من إكسل تلقائي):<br>
-        <code>Name&nbsp;&nbsp;&nbsp;Sp&nbsp;&nbsp;&nbsp;Medicine-Address</code><br>
-        مثال: <code>د. سارة يوسف&nbsp;&nbsp;&nbsp;أطفال&nbsp;&nbsp;&nbsp;بانادول - عيادة النور، المعادي</code>
+        رتّبي كل سطر بالشكل ده (افصلي بين الأعمدة بـ Tab زي ما بينسخ من إكسل تلقائي)، أربع خانات بالظبط:<br>
+        <code>Name&nbsp;&nbsp;&nbsp;Sp&nbsp;&nbsp;&nbsp;Medicine&nbsp;&nbsp;&nbsp;Address</code><br>
+        مثال: <code>د. سارة يوسف&nbsp;&nbsp;&nbsp;أطفال&nbsp;&nbsp;&nbsp;بانادول&nbsp;&nbsp;&nbsp;عيادة النور، المعادي</code>
       </div>
       <div class="form-grid" style="margin-bottom:12px;">
-        <div>
+        <div class="full">
           <label>المنطقة (تتطبق على كل الدكاترة اللي هتتضاف دلوقتي)</label>
           <input type="text" id="bulkArea" placeholder="مثال: المعادي">
         </div>
-        <div>
-          <label>تاريخ الزيارة لكل الدفعة دي</label>
-          <input type="date" id="bulkDay">
-        </div>
       </div>
-      <textarea class="bulk-input" id="bulkInput" placeholder="د. أحمد علي	باطنة	بانادول - شارع التحرير
-د. منى حسن	جلدية	اوجمنتين - عيادة النيل"></textarea>
+      <textarea class="bulk-input" id="bulkInput" placeholder="د. أحمد علي	باطنة	بانادول	شارع التحرير
+د. منى حسن	جلدية	اوجمنتين	عيادة النيل"></textarea>
       <div class="row-end">
         <button class="btn btn-primary" id="bulkAddBtn">➕ إضافة كل الدكاترة</button>
       </div>
@@ -382,7 +396,7 @@
 
     <div class="panel">
       <div class="filter-bar">
-        <input type="text" class="search" id="searchInput" placeholder="🔍 دوري باسم الدكتور...">
+        <input type="text" class="search" id="searchInput" placeholder="🔍 دوري بالاسم أو التخصص أو المنطقة أو الدواء...">
         <select id="areaFilter"><option value="">كل المناطق</option></select>
       </div>
       <div id="doctorsList"></div>
@@ -437,6 +451,7 @@ let doctors = [];
 let visits = [];
 let editingDoctorId = null;
 let pendingPhoto = null; // base64 of newly captured photo for the single-add form
+let collapsedAreas = new Set(); // area names currently collapsed in the grouped list
 
 /* ---------------- LOCK SCREEN ---------------- */
 document.getElementById('lockBtn').addEventListener('click', tryUnlock);
@@ -670,7 +685,6 @@ async function deleteDoctor(id){
 document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
   const raw = document.getElementById('bulkInput').value;
   const commonArea = document.getElementById('bulkArea').value.trim();
-  const commonDay = document.getElementById('bulkDay').value || todayISO();
   const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
 
   if(lines.length === 0){ showToast('⚠️ الصقي بيانات الدكاترة الأول'); return; }
@@ -682,16 +696,17 @@ document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
     const name = parts[0];
     if(!name) return;
     const sp = parts[1] || '';
-    const medAddress = parts.slice(2).join(' - ').trim();
+    const med = parts[2] || '';
+    const address = parts[3] || '';
     doctors.push({
       id: uid(),
       name,
       specialty: sp,
       area: commonArea,
-      address: '',
+      address,
       phone: '',
-      med: medAddress,
-      day: commonDay,
+      med,
+      day: '',
       notes: '',
       photo: null
     });
@@ -737,28 +752,10 @@ function renderAreaFilter(){
   sel.value = current;
 }
 
-function renderDoctors(){
-  const list = document.getElementById('doctorsList');
-  const search = document.getElementById('searchInput').value.trim().toLowerCase();
-  const areaFilter = document.getElementById('areaFilter').value;
+function doctorCardHtml(d){
   const t = todayISO();
-
-  let filtered = doctors.filter(d=>{
-    const matchSearch = !search || d.name.toLowerCase().includes(search);
-    const matchArea = !areaFilter || d.area === areaFilter;
-    return matchSearch && matchArea;
-  });
-
-  document.getElementById('countDoctors').textContent = doctors.length;
-
-  if(filtered.length === 0){
-    list.innerHTML = `<div class="empty-state"><div class="icon">🩺</div>لسه مفيش دكاترة مسجلين${search||areaFilter ? ' مطابقين للبحث' : ''}</div>`;
-    return;
-  }
-
-  list.innerHTML = filtered.map(d=>{
-    const visitedToday = visits.find(v=>v.doctorId===d.id && v.date===t);
-    return `
+  const visitedToday = visits.find(v=>v.doctorId===d.id && v.date===t);
+  return `
     <div class="doctor-card ${visitedToday ? 'visited-today':''}">
       <div class="doc-main">
         ${d.photo ? `<img src="${d.photo}" class="doc-thumb">` : ''}
@@ -784,6 +781,60 @@ function renderDoctors(){
         <button class="btn btn-danger btn-sm" onclick="deleteDoctor('${d.id}')">🗑 حذف</button>
       </div>
     </div>`;
+}
+
+function toggleAreaGroup(area){
+  if(collapsedAreas.has(area)) collapsedAreas.delete(area);
+  else collapsedAreas.add(area);
+  renderDoctors();
+}
+
+function renderDoctors(){
+  const list = document.getElementById('doctorsList');
+  const search = document.getElementById('searchInput').value.trim().toLowerCase();
+  const areaFilter = document.getElementById('areaFilter').value;
+
+  let filtered = doctors.filter(d=>{
+    const matchSearch = !search
+      || d.name.toLowerCase().includes(search)
+      || (d.specialty || '').toLowerCase().includes(search)
+      || (d.area || '').toLowerCase().includes(search)
+      || (d.med || '').toLowerCase().includes(search);
+    const matchArea = !areaFilter || d.area === areaFilter;
+    return matchSearch && matchArea;
+  });
+
+  document.getElementById('countDoctors').textContent = doctors.length;
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="icon">🩺</div>لسه مفيش دكاترة مسجلين${search||areaFilter ? ' مطابقين للبحث' : ''}</div>`;
+    return;
+  }
+
+  // Group by area (doctors with no area go under "بدون منطقة")
+  const groups = {};
+  filtered.forEach(d=>{
+    const key = d.area && d.area.trim() ? d.area.trim() : 'بدون منطقة';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+
+  const areaNames = Object.keys(groups).sort((a,b)=>{
+    if(a === 'بدون منطقة') return 1;
+    if(b === 'بدون منطقة') return -1;
+    return a.localeCompare(b, 'ar');
+  });
+
+  list.innerHTML = areaNames.map(area=>{
+    const docsInArea = groups[area];
+    const isCollapsed = collapsedAreas.has(area);
+    const header = `
+      <div class="area-group-header ${isCollapsed ? 'collapsed':''}" onclick="toggleAreaGroup('${area.replace(/'/g,"\\'")}')">
+        <span class="agh-title">📍 ${escapeHtml(area)} <span class="agh-count">${docsInArea.length}</span></span>
+        <span class="agh-chevron">▾</span>
+      </div>`;
+    const body = isCollapsed ? '' : docsInArea.map(doctorCardHtml).join('');
+    return header + body;
   }).join('');
 }
 
@@ -941,7 +992,6 @@ async function init(){
 
   document.getElementById('fDay').value = todayISO();
   initDateField(document.getElementById('fDay'), document.getElementById('fDayHint'));
-  document.getElementById('bulkDay').value = todayISO();
   reportDateInput.value = todayISO();
 
   renderDoctors();
