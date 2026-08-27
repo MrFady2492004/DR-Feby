@@ -9,15 +9,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@600;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg: #FFF5F8;
+    --bg: #FFF9FB;
     --panel: #FFFFFF;
-    --ink: #3A1B2A;
-    --ink-soft: #8A5D72;
-    --primary: #C2185B;
-    --primary-dark: #8E0F47;
-    --accent: #F06292;
-    --accent-soft: #FCE4EC;
-    --line: #F3D3E0;
+    --ink: #4A2E3D;
+    --ink-soft: #A78593;
+    --primary: #E58AB0;
+    --primary-dark: #C85E8E;
+    --accent: #F3AECB;
+    --accent-soft: #FCEFF5;
+    --line: #F6DFE9;
     --danger: #C34A3A;
     --radius: 14px;
   }
@@ -301,7 +301,8 @@
   </header>
 
   <nav class="tabs">
-    <button class="active" data-tab="doctors">الدكاترة <span class="count" id="countDoctors">0</span></button>
+    <button class="active" data-tab="doctors">تسجيل دكتور جديد <span class="count" id="countDoctors">0</span></button>
+    <button data-tab="logvisit">تسجيل زيارة جديدة</button>
     <button data-tab="today">زيارات اليوم <span class="count" id="countToday">0</span></button>
     <button data-tab="report">التقرير والتصدير</button>
   </nav>
@@ -400,6 +401,18 @@
         <select id="areaFilter"><option value="">كل المناطق</option></select>
       </div>
       <div id="doctorsList"></div>
+    </div>
+  </div>
+
+  <!-- ================= LOG VISIT TAB ================= -->
+  <div id="tab-logvisit" style="display:none;">
+    <div class="panel">
+      <h2>تسجيل زيارة جديدة</h2>
+      <p class="sub">دوري على الدكتور اللي زرتيه دلوقتي وسجلي الزيارة بضغطة واحدة</p>
+      <div class="filter-bar">
+        <input type="text" class="search" id="visitSearchInput" placeholder="🔍 دوري بالاسم أو التخصص أو المنطقة...">
+      </div>
+      <div id="logVisitList"></div>
     </div>
   </div>
 
@@ -550,24 +563,40 @@ function renderPhotoPreview(src){
   }
 }
 
-/* ---------------- STORAGE ---------------- */
+/* ---------------- STORAGE (Firebase Realtime Database) ---------------- */
+const FIREBASE_URL = "https://dr-feby-visits-default-rtdb.europe-west1.firebasedatabase.app";
+
 async function loadData(){
   try{
-    const d = await window.storage.get('doctors', false);
-    doctors = d ? JSON.parse(d.value) : [];
+    const res = await fetch(`${FIREBASE_URL}/doctors.json`);
+    const data = await res.json();
+    doctors = Array.isArray(data) ? data.filter(Boolean) : (data ? Object.values(data) : []);
   }catch(e){ doctors = []; }
   try{
-    const v = await window.storage.get('visits', false);
-    visits = v ? JSON.parse(v.value) : [];
+    const res2 = await fetch(`${FIREBASE_URL}/visits.json`);
+    const data2 = await res2.json();
+    visits = Array.isArray(data2) ? data2.filter(Boolean) : (data2 ? Object.values(data2) : []);
   }catch(e){ visits = []; }
 }
 async function saveDoctors(){
-  try{ await window.storage.set('doctors', JSON.stringify(doctors), false); }
-  catch(e){ showToast('⚠️ حصل خطأ في الحفظ، جربي تقللي عدد الصور'); }
+  try{
+    const res = await fetch(`${FIREBASE_URL}/doctors.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(doctors)
+    });
+    if(!res.ok) throw new Error('save failed');
+  }catch(e){ showToast('⚠️ حصل خطأ في الحفظ، تأكدي من الاتصال بالإنترنت'); }
 }
 async function saveVisits(){
-  try{ await window.storage.set('visits', JSON.stringify(visits), false); }
-  catch(e){ showToast('⚠️ حصل خطأ في الحفظ'); }
+  try{
+    const res = await fetch(`${FIREBASE_URL}/visits.json`, {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(visits)
+    });
+    if(!res.ok) throw new Error('save failed');
+  }catch(e){ showToast('⚠️ حصل خطأ في الحفظ'); }
 }
 
 /* ---------------- TABS ---------------- */
@@ -575,9 +604,10 @@ document.querySelectorAll('nav.tabs button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    ['doctors','today','report'].forEach(t=>{
+    ['doctors','logvisit','today','report'].forEach(t=>{
       document.getElementById('tab-'+t).style.display = (t===btn.dataset.tab) ? 'block' : 'none';
     });
+    if(btn.dataset.tab === 'logvisit') renderLogVisitList();
     if(btn.dataset.tab === 'today') renderToday();
     if(btn.dataset.tab === 'report') renderReport();
   });
@@ -631,6 +661,7 @@ document.getElementById('saveDoctorBtn').addEventListener('click', async ()=>{
   resetForm();
   renderDoctors();
   renderAreaFilter();
+  renderLogVisitList();
 });
 
 document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
@@ -678,6 +709,7 @@ async function deleteDoctor(id){
   await saveVisits();
   renderDoctors();
   renderAreaFilter();
+  renderLogVisitList();
   renderToday();
 }
 
@@ -719,6 +751,7 @@ document.getElementById('bulkAddBtn').addEventListener('click', async ()=>{
   document.getElementById('bulkInput').value = '';
   renderDoctors();
   renderAreaFilter();
+  renderLogVisitList();
   showToast(`✅ اتضاف ${added} دكتور بنجاح`);
 });
 
@@ -734,12 +767,14 @@ async function logVisitToday(id){
   await saveVisits();
   showToast('✅ اتسجلت الزيارة');
   renderDoctors();
+  renderLogVisitList();
   renderToday();
 }
 async function unlogVisit(visitId){
   visits = visits.filter(v=>v.id!==visitId);
   await saveVisits();
   renderDoctors();
+  renderLogVisitList();
   renderToday();
 }
 
@@ -752,9 +787,15 @@ function renderAreaFilter(){
   sel.value = current;
 }
 
-function doctorCardHtml(d){
+function doctorCardHtml(d, mode){
   const t = todayISO();
   const visitedToday = visits.find(v=>v.doctorId===d.id && v.date===t);
+  const actionsHtml = (mode === 'visit')
+    ? (visitedToday
+        ? `<button class="btn btn-ghost btn-sm" onclick="unlogVisit('${visitedToday.id}')">إلغاء الزيارة</button>`
+        : `<button class="btn btn-primary btn-sm" onclick="logVisitToday('${d.id}')">✔ سجل زيارة اليوم</button>`)
+    : `<button class="btn btn-ghost btn-sm" onclick="editDoctor('${d.id}')">✏️ تعديل</button>
+       <button class="btn btn-danger btn-sm" onclick="deleteDoctor('${d.id}')">🗑 حذف</button>`;
   return `
     <div class="doctor-card ${visitedToday ? 'visited-today':''}">
       <div class="doc-main">
@@ -773,20 +814,43 @@ function doctorCardHtml(d){
         </div>
       </div>
       <div class="doc-actions">
-        ${visitedToday
-          ? `<button class="btn btn-ghost btn-sm" onclick="unlogVisit('${visitedToday.id}')">إلغاء الزيارة</button>`
-          : `<button class="btn btn-primary btn-sm" onclick="logVisitToday('${d.id}')">✔ سجل زيارة اليوم</button>`
-        }
-        <button class="btn btn-ghost btn-sm" onclick="editDoctor('${d.id}')">✏️ تعديل</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteDoctor('${d.id}')">🗑 حذف</button>
+        ${actionsHtml}
       </div>
     </div>`;
 }
 
-function toggleAreaGroup(area){
-  if(collapsedAreas.has(area)) collapsedAreas.delete(area);
-  else collapsedAreas.add(area);
-  renderDoctors();
+function toggleAreaGroup(area, mode){
+  const key = mode + '|' + area;
+  if(collapsedAreas.has(key)) collapsedAreas.delete(key);
+  else collapsedAreas.add(key);
+  if(mode === 'visit') renderLogVisitList(); else renderDoctors();
+}
+
+function buildGroupedListHtml(filtered, mode){
+  const groups = {};
+  filtered.forEach(d=>{
+    const key = d.area && d.area.trim() ? d.area.trim() : 'بدون منطقة';
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(d);
+  });
+
+  const areaNames = Object.keys(groups).sort((a,b)=>{
+    if(a === 'بدون منطقة') return 1;
+    if(b === 'بدون منطقة') return -1;
+    return a.localeCompare(b, 'ar');
+  });
+
+  return areaNames.map(area=>{
+    const docsInArea = groups[area];
+    const isCollapsed = collapsedAreas.has(mode + '|' + area);
+    const header = `
+      <div class="area-group-header ${isCollapsed ? 'collapsed':''}" onclick="toggleAreaGroup('${area.replace(/'/g,"\\'")}','${mode}')">
+        <span class="agh-title">📍 ${escapeHtml(area)} <span class="agh-count">${docsInArea.length}</span></span>
+        <span class="agh-chevron">▾</span>
+      </div>`;
+    const body = isCollapsed ? '' : docsInArea.map(d=>doctorCardHtml(d, mode)).join('');
+    return header + body;
+  }).join('');
 }
 
 function renderDoctors(){
@@ -811,35 +875,34 @@ function renderDoctors(){
     return;
   }
 
-  // Group by area (doctors with no area go under "بدون منطقة")
-  const groups = {};
-  filtered.forEach(d=>{
-    const key = d.area && d.area.trim() ? d.area.trim() : 'بدون منطقة';
-    if(!groups[key]) groups[key] = [];
-    groups[key].push(d);
-  });
-
-  const areaNames = Object.keys(groups).sort((a,b)=>{
-    if(a === 'بدون منطقة') return 1;
-    if(b === 'بدون منطقة') return -1;
-    return a.localeCompare(b, 'ar');
-  });
-
-  list.innerHTML = areaNames.map(area=>{
-    const docsInArea = groups[area];
-    const isCollapsed = collapsedAreas.has(area);
-    const header = `
-      <div class="area-group-header ${isCollapsed ? 'collapsed':''}" onclick="toggleAreaGroup('${area.replace(/'/g,"\\'")}')">
-        <span class="agh-title">📍 ${escapeHtml(area)} <span class="agh-count">${docsInArea.length}</span></span>
-        <span class="agh-chevron">▾</span>
-      </div>`;
-    const body = isCollapsed ? '' : docsInArea.map(doctorCardHtml).join('');
-    return header + body;
-  }).join('');
+  list.innerHTML = buildGroupedListHtml(filtered, 'manage');
 }
 
 document.getElementById('searchInput').addEventListener('input', renderDoctors);
 document.getElementById('areaFilter').addEventListener('change', renderDoctors);
+
+/* ---------------- LOG VISIT TAB ---------------- */
+function renderLogVisitList(){
+  const list = document.getElementById('logVisitList');
+  const search = document.getElementById('visitSearchInput').value.trim().toLowerCase();
+
+  let filtered = doctors.filter(d=>{
+    return !search
+      || d.name.toLowerCase().includes(search)
+      || (d.specialty || '').toLowerCase().includes(search)
+      || (d.area || '').toLowerCase().includes(search)
+      || (d.med || '').toLowerCase().includes(search);
+  });
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="empty-state"><div class="icon">🔍</div>${doctors.length === 0 ? 'لسه معملتيش أي دكتور، روحي تبويب "تسجيل دكتور جديد" الأول' : 'مفيش دكاترة مطابقين للبحث'}</div>`;
+    return;
+  }
+
+  list.innerHTML = buildGroupedListHtml(filtered, 'visit');
+}
+
+document.getElementById('visitSearchInput').addEventListener('input', renderLogVisitList);
 
 /* ---------------- TODAY TAB ---------------- */
 function renderToday(){
@@ -996,6 +1059,7 @@ async function init(){
 
   renderDoctors();
   renderAreaFilter();
+  renderLogVisitList();
   renderToday();
   renderReport();
 }
